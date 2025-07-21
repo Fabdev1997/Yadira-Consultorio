@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, CreditCard, Banknote, PieChart, BarChart3, Calendar, Download, Filter } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, CreditCard, Banknote, PieChart, BarChart3, Calendar, Download, Filter, Plus, Upload, FileText, Edit, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
+import NewTransactionModal from './NewTransactionModal';
+import InvoiceUploadModal from './InvoiceUploadModal';
 
 interface Transaction {
   id: string;
@@ -26,6 +28,9 @@ const FinancialPage: React.FC = () => {
   const [dateRange, setDateRange] = useState('month');
   const [transactionType, setTransactionType] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showNewTransaction, setShowNewTransaction] = useState(false);
+  const [showInvoiceUpload, setShowInvoiceUpload] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const { user } = useAuth();
 
   // Only accessible by admin
@@ -116,6 +121,25 @@ const FinancialPage: React.FC = () => {
     }
   ]);
 
+  const [pendingInvoices, setPendingInvoices] = useState([
+    {
+      id: 'PROV-001',
+      supplier: 'Laboratorios ABC',
+      description: 'Anestesia y materiales dentales',
+      amount: 850000,
+      dueDate: '2024-01-25',
+      status: 'pending'
+    },
+    {
+      id: 'PROV-002',
+      supplier: 'Dental Supply Co.',
+      description: 'Resinas y brackets',
+      amount: 1200000,
+      dueDate: '2024-01-30',
+      status: 'pending'
+    }
+  ]);
+
   const monthlyData = [
     { month: 'Ene', income: 4500000, expenses: 3200000, profit: 1300000 },
     { month: 'Feb', income: 5200000, expenses: 3800000, profit: 1400000 },
@@ -166,6 +190,47 @@ const FinancialPage: React.FC = () => {
     return matchesType && matchesCategory;
   });
 
+  const handleSaveTransaction = (transactionData: any) => {
+    const newTransaction: Transaction = {
+      id: Math.random().toString(36).substr(2, 9),
+      date: transactionData.date,
+      type: transactionData.type,
+      category: transactionData.category,
+      description: transactionData.description,
+      amount: transactionData.amount,
+      paymentMethod: transactionData.paymentMethod,
+      reference: transactionData.reference
+    };
+    setTransactions(prev => [...prev, newTransaction]);
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setShowNewTransaction(true);
+  };
+
+  const handleDeleteTransaction = (id: string) => {
+    if (confirm('¿Está seguro de que desea eliminar esta transacción?')) {
+      setTransactions(prev => prev.filter(t => t.id !== id));
+    }
+  };
+
+  const handleSaveInvoice = (invoiceData: any) => {
+    const newTransaction: Transaction = {
+      id: Math.random().toString(36).substr(2, 9),
+      date: new Date().toISOString().split('T')[0],
+      type: 'expense',
+      category: 'Proveedores',
+      description: `Factura ${invoiceData.invoiceNumber} - ${invoiceData.supplier}`,
+      amount: invoiceData.amount,
+      paymentMethod: invoiceData.paymentMethod,
+      reference: invoiceData.invoiceNumber
+    };
+    setTransactions(prev => [...prev, newTransaction]);
+    
+    // Remove from pending invoices if it exists
+    setPendingInvoices(prev => prev.filter(inv => inv.id !== invoiceData.invoiceNumber));
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -176,6 +241,20 @@ const FinancialPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <button 
+            onClick={() => setShowNewTransaction(true)}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Movimiento
+          </button>
+          <button 
+            onClick={() => setShowInvoiceUpload(true)}
+            className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Cargar Factura
+          </button>
           <button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
             <Download className="w-4 h-4" />
             Exportar Reporte
@@ -377,6 +456,37 @@ const FinancialPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Pending Invoices */}
+      {pendingInvoices.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Facturas Pendientes de Pago</h2>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              {pendingInvoices.map((invoice) => (
+                <div key={invoice.id} className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-gray-900">{invoice.supplier}</h4>
+                    <p className="text-sm text-gray-600">{invoice.description}</p>
+                    <p className="text-xs text-gray-500">Vence: {new Date(invoice.dueDate).toLocaleDateString('es-CO')}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-gray-900">${invoice.amount.toLocaleString()}</div>
+                    <button 
+                      onClick={() => setShowInvoiceUpload(true)}
+                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                    >
+                      Registrar Pago
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Recent Transactions */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200">
@@ -401,6 +511,9 @@ const FinancialPage: React.FC = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Monto
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
                 </th>
               </tr>
             </thead>
@@ -428,12 +541,47 @@ const FinancialPage: React.FC = () => {
                       {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleEditTransaction(transaction)}
+                        className="p-2 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-lg transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteTransaction(transaction.id)}
+                        className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modals */}
+      <NewTransactionModal
+        isOpen={showNewTransaction}
+        onClose={() => {
+          setShowNewTransaction(false);
+          setEditingTransaction(null);
+        }}
+        onSave={handleSaveTransaction}
+        editingTransaction={editingTransaction}
+        categories={categories}
+      />
+
+      <InvoiceUploadModal
+        isOpen={showInvoiceUpload}
+        onClose={() => setShowInvoiceUpload(false)}
+        onSave={handleSaveInvoice}
+        pendingInvoices={pendingInvoices}
+      />
     </div>
   );
 };
