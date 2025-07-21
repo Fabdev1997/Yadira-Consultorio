@@ -10,6 +10,7 @@ interface InventoryItem {
   minStock: number;
   maxStock: number;
   unitPrice: number;
+  unitCost: number;
   supplier: string;
   expirationDate?: string;
   lastRestocked: string;
@@ -35,6 +36,7 @@ const InventoryPage: React.FC = () => {
       minStock: 10,
       maxStock: 50,
       unitPrice: 15000,
+      unitCost: 12000,
       supplier: 'Laboratorios ABC',
       expirationDate: '2024-12-31',
       lastRestocked: '2024-01-10',
@@ -50,6 +52,7 @@ const InventoryPage: React.FC = () => {
       minStock: 8,
       maxStock: 20,
       unitPrice: 85000,
+      unitCost: 68000,
       supplier: 'Dental Supply Co.',
       lastRestocked: '2024-01-05',
       location: 'Estante B2',
@@ -64,6 +67,7 @@ const InventoryPage: React.FC = () => {
       minStock: 20,
       maxStock: 100,
       unitPrice: 45000,
+      unitCost: 35000,
       supplier: 'Medical Supplies Ltd',
       lastRestocked: '2023-12-20',
       location: 'Almacén C1',
@@ -78,6 +82,7 @@ const InventoryPage: React.FC = () => {
       minStock: 5,
       maxStock: 30,
       unitPrice: 120000,
+      unitCost: 95000,
       supplier: 'Ortho Materials Inc',
       lastRestocked: '2024-01-08',
       location: 'Estante D1',
@@ -92,6 +97,7 @@ const InventoryPage: React.FC = () => {
       minStock: 5,
       maxStock: 15,
       unitPrice: 95000,
+      unitCost: 76000,
       supplier: 'Dental Supply Co.',
       expirationDate: '2024-02-15',
       lastRestocked: '2023-11-15',
@@ -108,6 +114,7 @@ const InventoryPage: React.FC = () => {
     minStock: 0,
     maxStock: 0,
     unitPrice: 0,
+    unitCost: 0,
     supplier: '',
     expirationDate: '',
     lastRestocked: new Date().toISOString().split('T')[0],
@@ -181,6 +188,7 @@ const InventoryPage: React.FC = () => {
       minStock: 0,
       maxStock: 0,
       unitPrice: 0,
+      unitCost: 0,
       supplier: '',
       expirationDate: '',
       lastRestocked: new Date().toISOString().split('T')[0],
@@ -215,7 +223,8 @@ const InventoryPage: React.FC = () => {
     lowStock: inventory.filter(item => getItemStatus(item) === 'low_stock').length,
     outOfStock: inventory.filter(item => getItemStatus(item) === 'out_of_stock').length,
     expired: inventory.filter(item => getItemStatus(item) === 'expired').length,
-    totalValue: inventory.reduce((sum, item) => sum + (item.currentStock * item.unitPrice), 0)
+    totalValue: inventory.reduce((sum, item) => sum + (item.currentStock * item.unitPrice), 0),
+    totalCost: inventory.reduce((sum, item) => sum + (item.currentStock * item.unitCost), 0)
   };
 
   const canEdit = user?.role === 'admin' || user?.role === 'assistant';
@@ -241,7 +250,7 @@ const InventoryPage: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-purple-50 rounded-lg">
@@ -296,6 +305,19 @@ const InventoryPage: React.FC = () => {
                 ${stats.totalValue.toLocaleString()}
               </h3>
               <p className="text-gray-600 text-sm">Valor Total</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">
+                ${stats.totalCost.toLocaleString()}
+              </h3>
+              <p className="text-gray-600 text-sm">Costo Total</p>
             </div>
           </div>
         </div>
@@ -360,7 +382,7 @@ const InventoryPage: React.FC = () => {
                   Stock
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Precio
+                  Precio/Costo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Proveedor
@@ -394,9 +416,10 @@ const InventoryPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        <div className="font-medium">${item.unitPrice.toLocaleString()}</div>
+                        <div className="font-medium">Precio: ${item.unitPrice.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Costo: ${item.unitCost.toLocaleString()}</div>
                         <div className="text-xs text-gray-500">
-                          Total: ${(item.currentStock * item.unitPrice).toLocaleString()}
+                          Valor: ${(item.currentStock * item.unitPrice).toLocaleString()}
                         </div>
                       </div>
                     </td>
@@ -495,6 +518,13 @@ const InventoryPage: React.FC = () => {
                 className="px-3 py-2 border border-gray-300 rounded-lg"
               />
               <input
+                type="number"
+                placeholder="Costo unitario"
+                value={newItem.unitCost}
+                onChange={(e) => setNewItem({ ...newItem, unitCost: parseInt(e.target.value) })}
+                className="px-3 py-2 border border-gray-300 rounded-lg"
+              />
+              <input
                 type="text"
                 placeholder="Proveedor"
                 value={newItem.supplier}
@@ -584,6 +614,12 @@ const InventoryPage: React.FC = () => {
                 type="number"
                 value={editingItem.unitPrice}
                 onChange={(e) => setEditingItem({ ...editingItem, unitPrice: parseInt(e.target.value) })}
+                className="px-3 py-2 border border-gray-300 rounded-lg"
+              />
+              <input
+                type="number"
+                value={editingItem.unitCost}
+                onChange={(e) => setEditingItem({ ...editingItem, unitCost: parseInt(e.target.value) })}
                 className="px-3 py-2 border border-gray-300 rounded-lg"
               />
               <input
