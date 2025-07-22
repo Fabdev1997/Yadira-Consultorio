@@ -43,7 +43,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, isOpen, on
         { id: 'promotions', label: 'Promociones', icon: Tag },
         { id: 'reports', label: 'Reportes', icon: BarChart3 },
         { id: 'settings', label: 'Configuración', icon: Settings },
-        { id: 'settings', label: 'Configuración', icon: Settings },
       ];
     } else if (user?.role === 'dentist') {
       return [
