@@ -112,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, isOpen, on
         </div>
 
         <nav className="p-4 space-y-2">
-        <div className="pb-24"> {/* Add padding bottom to prevent overlap with user info */}
+        <div className="pb-20 overflow-y-auto max-h-[calc(100vh-8rem)]"> {/* Adjusted padding and added scroll */}
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
@@ -142,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, isOpen, on
         </nav>
 
         {/* User info */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium">
