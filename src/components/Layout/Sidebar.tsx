@@ -112,6 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, isOpen, on
         </div>
 
         <nav className="p-4 space-y-2">
+        <div className="pb-24"> {/* Add padding bottom to prevent overlap with user info */}
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
@@ -137,6 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, isOpen, on
               </button>
             );
           })}
+        </div>
         </nav>
 
         {/* User info */}
